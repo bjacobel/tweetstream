@@ -20,20 +20,22 @@ def importance(tweet):
 
     # highly devalue @replies
     if re.match(r'@', tweet['text']):
-        points += 5
+        points -= 5
 
-    # slightly devalue tweets by users already in the cache
+    # slightly devalue tweets by users already in the cache (no livetweeting, guys)
     if tweet['user']['screen_name'] in cache.lookinside('user', 'screen_name'):
-        points += 1
+        points -= 1
 
     # devalue every @mention past 1 (it indicates the tweet is for their benefit, not ours)
     mentions = len(re.findall(r'@', tweet['text']))
     if mentions > 1:
-        points += mentions * -0.5
+        points -= mentions * -0.5
 
     # devalue swearwords because god forbid we offend somebody
-    #if swearwordzz:
-    #    points += 3
+    # proof of concept - this could either get way more complex or removed entirely
+    # because in theory we trust the people we're following to not be jerks
+    if re.search(r'fuck|\bass\b|shit|bitch', tweet['text']):
+        points -= 2
 
     return points
 
@@ -58,7 +60,7 @@ def main():
         for tweet in iterator:
             # tweet comes from someone in the list (not an RT of one of their tweets)
             if 'user' in tweet and tweet['user']['id_str'] in id_list:
-                print(tweet['user']['name'].encode('utf-8') + ": " + tweet['text'].encode('utf-8'))
+                print("%.2f - %s: %s") % (importance(tweet), tweet['user']['name'].encode('utf-8'), tweet['text'].encode('utf-8'))
                 if importance(tweet) > rate():
                     twitter.statuses.retweet(id=tweet['id'])
                 cache.add(tweet)
