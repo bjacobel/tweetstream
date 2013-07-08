@@ -2,7 +2,7 @@ import collections
 import threading
 
 
-class CacheContainter:
+class CacheContainer:
     def __init__(self, timeout=1):
         self.lock = threading.Lock()
         self.timeout = timeout
@@ -13,7 +13,7 @@ class CacheContainter:
             self.events.append(item)
             threading.Timer(self.timeout, self.expire).start()
 
-    def __len__(self):
+    def len(self):
         with self.lock:
             return len(self.events)
 
@@ -21,6 +21,13 @@ class CacheContainter:
         with self.lock:
             self.events.popleft()
 
-    def __str__(self):
+    # return the values for a key that all entires in the collection possess
+    def lookinside(self, key, key2=None):
         with self.lock:
-            return str(self.events)
+            values = []
+            for event in self.events:
+                if not key2:
+                    values.append(event[key])
+                else:
+                    values.append(event[key][key2])
+        return values

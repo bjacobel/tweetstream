@@ -1,7 +1,7 @@
 from twitter import Twitter, OAuth
 from myoauth import creds
 
-twitter = Twitter(auth=OAuth(myoauth.creds['OAUTH_TOKEN'], myoauth.creds['OAUTH_SECRET'], myoauth.creds['CONSUMER_KEY'], myoauth.creds['CONSUMER_SECRET']))
+twitter = Twitter(auth=OAuth(creds['OAUTH_TOKEN'], creds['OAUTH_SECRET'], creds['CONSUMER_KEY'], creds['CONSUMER_SECRET']))
 
 users = [line.strip() for line in open("users.txt").readlines()]
 ids = open('ids.txt', 'w')
