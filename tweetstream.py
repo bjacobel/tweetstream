@@ -52,12 +52,12 @@ def importance(tweet):
     return points
 
 
+# average tweets per 100 seconds
 def rate():
-    return cache.len() / float(cache_length) * 1000
+    return cache.len() / float(cache_length) * 100
 
 
 def main():
-    try:
         twitter = Twitter(auth=OAuth(creds['OAUTH_TOKEN'], creds['OAUTH_SECRET'], creds['CONSUMER_KEY'], creds['CONSUMER_SECRET']))
         twitter_stream = TwitterStream(auth=OAuth(creds['OAUTH_TOKEN'], creds['OAUTH_SECRET'], creds['CONSUMER_KEY'], creds['CONSUMER_SECRET']))
 
@@ -65,10 +65,10 @@ def main():
         cache = CacheContainer(cache_length)
 
         # for plot
+        tweet_history = []
         rate_history = []
         events_history = []
         mpl.interactive(True)
-
         start = time.time()
 
         id_list = [str(line.strip()) for line in open("ids.txt").readlines()]
@@ -77,26 +77,41 @@ def main():
         iterator = twitter_stream.statuses.filter(follow=id_string)
 
         for tweet in iterator:
-            # tweet comes from someone in the list (not an RT of one of their tweets)
-            if 'user' in tweet and tweet['user']['id_str'] in id_list:
-                tweet_imp = importance(tweet)
-                stream_rate = rate()
-                if tweet_imp > stream_rate:
-                    print("Retweeting tweet with importance %.2f (current rate %.2f)") % (tweet_imp, stream_rate)
-                    print(" -->  %s") % tweet['text'].encode('utf-8')
-                    #twitter.statuses.retweet(id=tweet['id'])
-                else:
-                    print("Not retweeting a tweet that scored %.2f (rate is %.2f)") % (tweet_imp, stream_rate)
-                rate_history.append(stream_rate)
-                events_history.append(time.time() - start)
-                mpl.plot(events_history, rate_history, "r-")
-                mpl.draw()
-                cache.add(tweet)
-    except:
-        cache.clear()
-        mpl.close()
-        raise
-        import ipdb; ipdb.set_trace()
+            try:
+                # tweet comes from someone in the list (not an RT of one of their tweets)
+                if 'user' in tweet and tweet['user']['id_str'] in id_list:
+
+                    tweet_imp = importance(tweet)
+                    stream_rate = rate()
+
+                    # need a more elegant solution for the rate climbing up from 0 on start
+                    if (time.time() - start) < 300:
+                        stream_rate = 3
+
+                    if tweet_imp > stream_rate:
+
+                        #debug printouts
+                        print("Retweeting tweet with importance %.2f (current rate %.2f)") % (tweet_imp, stream_rate)
+                        print(" -->  %s") % tweet['text'].encode('utf-8')
+
+                        #twitter.statuses.retweet(id=tweet['id'])
+
+                        # make pretty graphs
+                        tweet_history.append(tweet_imp)
+                        rate_history.append(stream_rate)
+                        events_history.append(time.time() - start)
+                        mpl.plot(events_history, tweet_history, "b-", events_history, rate_history, "r-")
+                        mpl.draw()
+
+                        cache.add(tweet)
+                    else:
+                        print("Not retweeting a tweet that scored %.2f (rate is %.2f)") % (tweet_imp, stream_rate)
+            except:
+                # cache.clear()
+                # mpl.close()
+                # raise
+                # import ipdb; ipdb.set_trace()
+                print("ERROR: %s" % sys.exc_info()[0])
 
 if __name__ == "__main__":
     main()
