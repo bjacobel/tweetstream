@@ -3,9 +3,8 @@ from myoauth import creds
 from CacheContainer import CacheContainer
 import matplotlib.pyplot as mpl
 from math import log
-import time
-import re
-import sys
+from time import time
+import re, sys, os
 
 cache_length = 300
 
@@ -81,7 +80,7 @@ def importance(tweet):
 
 # average tweets per 100 seconds
 def rate():
-    elapsed = time.time() - start < 300
+    elapsed = time() - start
     if elapsed < 300:
         return cache.len() / float(elapsed) * 100
     else:
@@ -101,7 +100,7 @@ def main():
     events_history = []
     mpl.interactive(True)
     global start
-    start = time.time()
+    start = time()
 
     id_list = [str(line.strip()) for line in open("ids.txt").readlines()]
     id_string = ','.join(id_list)
@@ -131,14 +130,17 @@ def main():
                 # make pretty graphs
                 tweet_history.append(tweet_imp)
                 rate_history.append(stream_rate)
-                events_history.append(time.time() - start)
+                events_history.append(time() - start)
                 mpl.plot(events_history, tweet_history, "bo", events_history, rate_history, "r-")
                 mpl.draw()
-        except KeyboardInterrupt:
-            cache.clear()
-            mpl.close()
         except:
             print("ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        cache.clear()
+        mpl.close()
+        print('Killed by user')
+        #os.system('killall python')

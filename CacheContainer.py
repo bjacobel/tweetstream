@@ -1,6 +1,5 @@
 import collections
 import threading
-import re
 
 
 class CacheContainer:
@@ -11,8 +10,9 @@ class CacheContainer:
 
     def add(self, item):
         with self.lock:
-            self.events.append(item)
-            threading.Timer(self.timeout, self.expire).start()
+            timer = threading.Timer(self.timeout, self.expire)
+            self.events.append({'item': item, 'timer': timer})
+            timer.start()
 
     def len(self):
         with self.lock:
@@ -28,12 +28,13 @@ class CacheContainer:
             values = []
             for event in self.events:
                 if not subkey:
-                    values.append(event[key])
+                    values.append(event['item'][key])
                 else:
-                    values.append(event[key][subkey])
+                    values.append(event['item'][key][subkey])
         return values
 
     # run on shutdown - or else python will wait for all of the events to expire
     def clear(self):
         with self.lock:
-            self.events.clear()
+            for event in self.events:
+                event['timer'].cancel()
