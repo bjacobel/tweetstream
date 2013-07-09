@@ -13,6 +13,12 @@ cache_length = 300
 def importance(tweet):
     points = 0
 
+    # construct a list of all hashtags - this will be used in several places
+    tags = []
+    if 'hashtags' in tweet:
+        for hashtag in tweet['hashtags']:
+            tags.append(hashtag['tweet'])
+
     # add value for the tweet being itself a retweet
     if 'retweeted_status' in tweet:
         points += 2
@@ -34,12 +40,21 @@ def importance(tweet):
     if 'media' in tweet:
         points += 1.5
 
+    # uprank for tweets with hashtags shared by 25% of the other tweets in the cache
+    for tag in tags:
+        cached_tags = []
+        for taglist in cache.inspect_values('hashtags'):
+            for tag in taglist:
+                cached_tags.append(tag['text'])
+        if len(re.findall(tag, ' '.join(cached_tags)))/float(len(cached_tags)) > 0.25:
+            points += 1
+
     # highly devalue @replies
     if re.match(r'@', tweet['text']):
         points -= 5
 
     # devalue tweets by users already in the cache (no livetweeting)
-    if tweet['user']['screen_name'] in cache.lookinside('user', 'screen_name'):
+    if tweet['user']['screen_name'] in cache.inspect_value('user', 'screen_name'):
         points -= 1.5
 
     # devalue every @mention past 1 (they indicate the tweet is for those peoples' benefit, not ours)
@@ -54,8 +69,12 @@ def importance(tweet):
         points -= 2
 
     # downrank stupid hashtags
-    if 'hashtags' in tweet and re.match(r'yolo|omg|wtf|lol|some|sm|wow)', tweet['hashtags']['text'].lower()):
-        points -= 1.5
+    for tag in tags:
+        if re.match(r'yolo|omg|wtf|lol|some|sm|wow)', tag.lower()):
+            points -= 1.5
+
+    # downrank tweets the farther they are from the "sweet spot", 100chars long
+    points -= abs(len(tweet['text'])-100)/float(100)
 
     return points
 
@@ -108,14 +127,13 @@ def main():
                 tweet_history.append(tweet_imp)
                 rate_history.append(stream_rate)
                 events_history.append(time.time() - start)
-                mpl.plot(events_history, tweet_history, "b-", events_history, rate_history, "r-")
+                mpl.plot(events_history, tweet_history, "bo", events_history, rate_history, "r-")
                 mpl.draw()
         except KeyboardInterrupt:
             cache.clear()
             mpl.close()
         except:
             print("ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
-            import ipdb; ipdb.set_trace()
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 import collections
 import threading
+import re
 
 
 class CacheContainer:
@@ -21,17 +22,18 @@ class CacheContainer:
         with self.lock:
             self.events.popleft()
 
-    # return the values for a key that all entires in the collection possess
-    def lookinside(self, key, key2=None):
+    # return the values for a key that all entries in the collection possess
+    def inspect_value(self, key, subkey=None):
         with self.lock:
             values = []
             for event in self.events:
-                if not key2:
+                if not subkey:
                     values.append(event[key])
                 else:
-                    values.append(event[key][key2])
+                    values.append(event[key][subkey])
         return values
 
+    # run on shutdown - or else python will wait for all of the events to expire
     def clear(self):
         with self.lock:
             self.events.clear()
