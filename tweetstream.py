@@ -81,7 +81,11 @@ def importance(tweet):
 
 # average tweets per 100 seconds
 def rate():
-    return cache.len() / float(cache_length) * 100
+    elapsed = time.time() - start < 300
+    if elapsed < 300:
+        return cache.len() / float(elapsed) * 100
+    else:
+        return cache.len() / float(cache_length) * 100
 
 
 def main():
@@ -96,6 +100,7 @@ def main():
     rate_history = []
     events_history = []
     mpl.interactive(True)
+    global start
     start = time.time()
 
     id_list = [str(line.strip()) for line in open("ids.txt").readlines()]
