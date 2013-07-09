@@ -31,3 +31,8 @@ class CacheContainer:
                 else:
                     values.append(event[key][key2])
         return values
+
+    def clear(self):
+        for event in self.events:
+            event.expire()
+

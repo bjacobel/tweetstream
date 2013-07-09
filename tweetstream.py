@@ -1,7 +1,9 @@
 from twitter import *
 from myoauth import creds
 from CacheContainer import CacheContainer
+import matplotlib.pyplot as mpl
 from math import log
+import time
 import re
 
 cache_length = 300
@@ -10,7 +12,7 @@ cache_length = 300
 def importance(tweet):
     points = 0
 
-    # add some value for the tweet being itself a retweet
+    # add value for the tweet being itself a retweet
     if re.search(r'RT @\w+\:', tweet['text']):
         points += 3
 
@@ -21,7 +23,7 @@ def importance(tweet):
     points += log(tweet['user']['listed_count'], 10)
 
     # add value for sharing media
-    if media in tweet:
+    if 'media' in tweet:
         points += 1.5
 
     # highly devalue @replies
@@ -32,7 +34,7 @@ def importance(tweet):
     if tweet['user']['screen_name'] in cache.lookinside('user', 'screen_name'):
         points -= 1
 
-    # devalue every @mention past 1 (it indicates the tweet is for their benefit, not ours)
+    # devalue every @mention past 1 (they indicate the tweet is for those peoples' benefit, not ours)
     mentions = len(re.findall(r'@', tweet['text']))
     if mentions > 1:
         points -= (mentions * 0.5)
@@ -40,12 +42,12 @@ def importance(tweet):
     # devalue swearwords because god forbid we offend somebody
     # proof of concept - this could either get way more complex or removed entirely
     # because in theory we trust the people we're following to not be jerks
-    if re.search(r'(fuck|\bass(hole)?\b|shit|bitch)', tweet['text'].lower()):
+    if re.search(r'(fuck|\bass(hole)?|shit|bitch)', tweet['text'].lower()):
         points -= 2
 
     # downrank stupid hashtags
-    if hashtags in tweet and re.match(r'yolo|omg|wtf|lol|some|sm|wow)', tweet['hashtags']['text'].lower()):
-        points -= 2
+    if 'hashtags' in tweet and re.match(r'yolo|omg|wtf|lol|some|sm|wow)', tweet['hashtags']['text'].lower()):
+        points -= 1.5
 
     return points
 
@@ -62,6 +64,13 @@ def main():
         global cache
         cache = CacheContainer(cache_length)
 
+        # for plot
+        rate_history = []
+        events_history = []
+        mpl.interactive(True)
+
+        start = time.time()
+
         id_list = [str(line.strip()) for line in open("ids.txt").readlines()]
         id_string = ','.join(id_list)
 
@@ -70,15 +79,24 @@ def main():
         for tweet in iterator:
             # tweet comes from someone in the list (not an RT of one of their tweets)
             if 'user' in tweet and tweet['user']['id_str'] in id_list:
-                print("%.2f - %s: %s") % (importance(tweet), tweet['user']['name'].encode('utf-8'), tweet['text'].encode('utf-8'))
-                if importance(tweet) > rate():
-                    twitter.statuses.retweet(id=tweet['id'])
+                tweet_imp = importance(tweet)
+                stream_rate = rate()
+                if tweet_imp > stream_rate:
+                    print("Retweeting tweet with importance %.2f (current rate %.2f)") % (tweet_imp, stream_rate)
+                    print(" -->  %s") % tweet['text'].encode('utf-8')
+                    #twitter.statuses.retweet(id=tweet['id'])
+                else:
+                    print("Not retweeting a tweet that scored %.2f (rate is %.2f)") % (tweet_imp, stream_rate)
+                rate_history.append(stream_rate)
+                events_history.append(time.time() - start)
+                mpl.plot(events_history, rate_history, "r-")
+                mpl.draw()
                 cache.add(tweet)
     except:
         cache.clear()
-        import ipdb
-        ipdb.set_trace()
-
+        mpl.close()
+        raise
+        import ipdb; ipdb.set_trace()
 
 if __name__ == "__main__":
     main()
