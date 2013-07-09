@@ -84,34 +84,31 @@ def main():
                     tweet_imp = importance(tweet)
                     stream_rate = rate()
 
-                    # need a more elegant solution for the rate climbing up from 0 on start
-                    if (time.time() - start) < 300:
-                        stream_rate = 3
-
                     if tweet_imp > stream_rate:
-
                         #debug printouts
                         print("Retweeting tweet with importance %.2f (current rate %.2f)") % (tweet_imp, stream_rate)
                         print(" -->  %s") % tweet['text'].encode('utf-8')
 
-                        #twitter.statuses.retweet(id=tweet['id'])
-
-                        # make pretty graphs
-                        tweet_history.append(tweet_imp)
-                        rate_history.append(stream_rate)
-                        events_history.append(time.time() - start)
-                        mpl.plot(events_history, tweet_history, "b-", events_history, rate_history, "r-")
-                        mpl.draw()
-
-                        cache.add(tweet)
+                        twitter.statuses.retweet(id=tweet['id'])
                     else:
                         print("Not retweeting a tweet that scored %.2f (rate is %.2f)") % (tweet_imp, stream_rate)
+
+                    # cache the tweet whether it was worthy or not
+                    cache.add(tweet)
+
+                    # make pretty graphs
+                    tweet_history.append(tweet_imp)
+                    rate_history.append(stream_rate)
+                    events_history.append(time.time() - start)
+                    mpl.plot(events_history, tweet_history, "b-", events_history, rate_history, "r-")
+                    mpl.draw()
+            except KeyboardInterrupt:
+                cache.clear()
+                mpl.close()
             except:
-                # cache.clear()
-                # mpl.close()
                 # raise
                 # import ipdb; ipdb.set_trace()
-                print("ERROR: %s" % sys.exc_info()[0])
+                print("ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
 
 if __name__ == "__main__":
     main()

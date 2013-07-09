@@ -37,3 +37,4 @@ class CacheContainer:
     def clear(self):
         with self.lock:
             self.t.cancel()
+            self.events.clear()
