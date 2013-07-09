@@ -7,13 +7,11 @@ class CacheContainer:
         self.lock = threading.Lock()
         self.timeout = timeout
         self.events = collections.deque()
-        self.t = None
 
     def add(self, item):
         with self.lock:
             self.events.append(item)
-            self.t = threading.Timer(self.timeout, self.expire)
-            self.t.start()
+            threading.Timer(self.timeout, self.expire).start()
 
     def len(self):
         with self.lock:
@@ -36,5 +34,4 @@ class CacheContainer:
 
     def clear(self):
         with self.lock:
-            self.t.cancel()
             self.events.clear()
