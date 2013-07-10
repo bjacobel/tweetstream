@@ -1,6 +1,7 @@
 from twitter import *
 from myoauth import creds
 from CacheContainer import CacheContainer
+from Levenshtein import ratio
 import matplotlib.pyplot as mpl
 from math import log
 from time import time
@@ -12,7 +13,6 @@ cache_length = 300
 def importance(tweet):
     points = 0
 
-    # construct a list of all hashtags - this will be used in several places
     tags = []
     if 'hashtags' in tweet:
         for hashtag in tweet['hashtags']:
@@ -47,6 +47,12 @@ def importance(tweet):
                 cached_tags.append(tag['text'])
         if len(re.findall(tag, ' '.join(cached_tags)))/float(len(cached_tags)) > 0.25:
             points += 1
+
+    # highly devalue tweets that are suspected duplicates
+    # uses Levenshtein edit distance
+    for cached_tweet in cache.inspect_values('text'):
+        if ratio(tweet['text'], cached_tweet) > 0.75:  # 75% similarity
+            points -= 5
 
     # highly devalue @replies
     if re.match(r'@', tweet['text']):
@@ -143,4 +149,4 @@ if __name__ == "__main__":
         cache.clear()
         mpl.close()
         print('Killed by user')
-        #os.system('killall python')
+        os.system('killall python')
