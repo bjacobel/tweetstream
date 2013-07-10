@@ -42,7 +42,11 @@ def importance(tweet):
         print("+{:.2f} -- favorited by {}").format(log(tweet['favorite_count'], 10), tweet['favorite_count'])
 
     # add value for sharing media
-    if 'media' in tweet:
+    urls = ""
+    if 'urls' in tweet:
+        for url in tweet['urls']:
+            urls += " ".join(url['display_url'])
+    if 'media' in tweet or re.search(r'(vine|pic.twitter|twitpic|yfrog|instagr(am)?)', urls):
         points += 1.5
         print("+1.50 -- contains media")
 
@@ -61,7 +65,7 @@ def importance(tweet):
     for cached_tweet in cache.inspect_value('text'):
         if ratio(tweet['text'], cached_tweet) > 0.75:  # 75% similarity
             points -= 5
-            print("-5.00 -- a suspected duplicate"),
+            print("-5.00 -- a suspected duplicate")
 
     # highly devalue @replies
     if re.match(r'@', tweet['text']):
@@ -76,13 +80,13 @@ def importance(tweet):
     # devalue every @mention past 1 (they indicate the tweet is for those peoples' benefit, not ours)
     mentions = len(re.findall(r'@', tweet['text']))
     if mentions > 1:
-        points -= (mentions * 0.75)
-        print("-{:.2f} -- too @mention-y").format(mentions * 0.75)
+        points -= ((mentions-1) * 0.75)
+        print("-{:.2f} -- too @mention-y").format((mentions-1) * 0.75)
 
     # devalue swearwords because god forbid we offend somebody
     # proof of concept - this could either get way more complex or removed entirely
     # because in theory we trust the people we're following to not be jerks
-    if re.search(r'(fuck|\bass(hole)?|shit|bitch)', tweet['text'].lower()):
+    if re.search(r'(fuck|\bass(hole)?\b|shit|bitch)', tweet['text'].lower()):
         points -= 2
         print("-2.00 -- vulgar")
 
