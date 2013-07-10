@@ -21,16 +21,16 @@ def importance(tweet):
 
     # add value for the tweet being itself a retweet
     if 'retweeted_status' in tweet:
-        points += 2
+        points += 1.5
         tweet = tweet['retweeted_status']
-        print("+2.00 -- a retweet (really from @{})").format(tweet['user']['screen_name'])
+        print("+1.50 -- a retweet (really from @{})").format(tweet['user']['screen_name'])
 
     # add value based on the number of followers the person tweeting has over 1000
     points += log(tweet['user']['followers_count'], 10) - 3
     print("+{:.2f} -- followed by {:,}").format(log(tweet['user']['followers_count'], 10) - 3, tweet['user']['followers_count'])
 
     # add some value for being on peoples lists (people use lists, right?)
-    points += log(tweet['user']['listed_count'], 10) - 1
+    points += log(tweet['user']['listed_count'], 10) - 1.5
     print("+{:.2f} -- listed by {:,}").format(log(tweet['user']['listed_count'], 10) - 1.5, tweet['user']['listed_count'])
 
     # add value for favorites and retweets
@@ -146,7 +146,8 @@ def main():
                     #debug printouts
                     print("importance %.2f > rate %.2f : retweeting") % (tweet_imp, stream_rate)
 
-                    twitter.statuses.retweet(id=tweet['id'])
+                    while not twitter.statuses.retweet(id=tweet['id']):
+                        print("Retweet rejected -- twitter might be experiencing downtime. Trying again...")
                 else:
                     print("importance %.2f < rate %.2f : dropping") % (tweet_imp, stream_rate)
 
