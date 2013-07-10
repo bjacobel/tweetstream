@@ -12,7 +12,6 @@ cache_length = 300
 
 def importance(tweet):
 
-    print("this tweet is"),
     points = 0
 
     tags = []
@@ -24,28 +23,28 @@ def importance(tweet):
     if 'retweeted_status' in tweet:
         points += 2
         tweet = tweet['retweeted_status']
-        print("a retweet,"),
+        print("+2.00 -- a retweet (really from @{})").format(tweet['user']['screen_name'])
 
     # add value based on the number of followers the person tweeting has over 1000
     points += log(tweet['user']['followers_count'], 10) - 3
-    print("followed by %d,") % tweet['user']['followers_count'],
+    print("+{:.2f} -- followed by {:,}").format(log(tweet['user']['followers_count'], 10) - 3, tweet['user']['followers_count'])
 
     # add some value for being on peoples lists (people use lists, right?)
-    points += log(tweet['user']['listed_count'], 10)
-    print("listed by %d,") % tweet['user']['listed_count'],
+    points += log(tweet['user']['listed_count'], 10) - 1
+    print("+{:.2f} -- listed by {:,}").format(log(tweet['user']['listed_count'], 10) - 1.5, tweet['user']['listed_count'])
 
     # add value for favorites and retweets
     if tweet['retweet_count']:
         points += log(tweet['retweet_count'], 10)
-        print("favorited by %d,") % tweet['retweet_count'],
+        print("+{:.2f} -- retweeted by {}").format(log(tweet['retweet_count'], 10), tweet['retweet_count'])
     if tweet['favorite_count']:
         points += log(tweet['favorite_count'], 10)
-        print("favorited by %d,") % tweet['favorite_count'],
+        print("+{:.2f} -- favorited by {}").format(log(tweet['favorite_count'], 10), tweet['favorite_count'])
 
     # add value for sharing media
     if 'media' in tweet:
         points += 1.5
-        print("contains media,"),
+        print("+1.50 -- contains media")
 
     # uprank for tweets with hashtags shared by 25% of the other tweets in the cache
     for tag in tags:
@@ -55,47 +54,47 @@ def importance(tweet):
                 cached_tags.append(tag['text'])
         if len(re.findall(tag, ' '.join(cached_tags)))/float(len(cached_tags)) > 0.25:
             points += 1
-            print("contains a popular hashtag,"),
+            print("+1.00 -- contains a popular hashtag")
 
     # highly devalue tweets that are suspected duplicates
     # uses Levenshtein edit distance
     for cached_tweet in cache.inspect_value('text'):
         if ratio(tweet['text'], cached_tweet) > 0.75:  # 75% similarity
             points -= 5
-            print("a suspected duplicate,"),
+            print("-5.00 -- a suspected duplicate"),
 
     # highly devalue @replies
     if re.match(r'@', tweet['text']):
         points -= 5
-        print("an @reply,"),
+        print("-5.00 -- an @reply")
 
     # devalue tweets by users already in the cache (no livetweeting)
     if tweet['user']['screen_name'] in cache.inspect_value('user', 'screen_name'):
         points -= 1.5
-        print("from a livetweeter,"),
+        print("-1.50 -- from an author already in the cache")
 
     # devalue every @mention past 1 (they indicate the tweet is for those peoples' benefit, not ours)
     mentions = len(re.findall(r'@', tweet['text']))
     if mentions > 1:
         points -= (mentions * 0.75)
-        print("too @mention-y,"),
+        print("-{:.2f} -- too @mention-y").format(mentions * 0.75)
 
     # devalue swearwords because god forbid we offend somebody
     # proof of concept - this could either get way more complex or removed entirely
     # because in theory we trust the people we're following to not be jerks
     if re.search(r'(fuck|\bass(hole)?|shit|bitch)', tweet['text'].lower()):
         points -= 2
-        print("vulgar,"),
+        print("-2.00 -- vulgar")
 
     # downrank stupid hashtags
     for tag in tags:
         if re.match(r'yolo|omg|wtf|lol|some|sm|wow)', tag.lower()):
             points -= 1.5
-            print("stupid,"),
+            print("-1.50 -- stupid")
 
     # downrank tweets the farther they are from the "sweet spot", 100chars long
     points -= abs(len(tweet['text'])-100)/float(100)
-    print("%.2f% too short/long.") % abs(len(tweet['text'])-100),
+    print("-{:.2f} -- too short/long.").format(abs(len(tweet['text'])-100)/float(100))
 
     return points
 
