@@ -3,7 +3,7 @@ from myoauth import creds
 from CacheContainer import CacheContainer
 from Levenshtein import ratio
 import matplotlib.pyplot as mpl
-from math import log
+from math import log, sqrt
 from time import time
 import re, sys, os
 
@@ -30,8 +30,8 @@ def importance(tweet):
     print("+{:.2f} -- followed by {:,}").format(log(tweet['user']['followers_count'], 10) - 3, tweet['user']['followers_count'])
 
     # add some value for being on peoples lists (people use lists, right?)
-    points += log(tweet['user']['listed_count'], 10) - 1.5
-    print("+{:.2f} -- listed by {:,}").format(log(tweet['user']['listed_count'], 10) - 1.5, tweet['user']['listed_count'])
+    points += sqrt(tweet['user']['listed_count']/float(5000))
+    print("+{:.2f} -- listed by {:,}").format(sqrt(tweet['user']['listed_count']/float(5000)), tweet['user']['listed_count'])
 
     # add value for favorites and retweets
     if tweet['retweet_count']:
@@ -161,7 +161,7 @@ def main():
                 mpl.plot(events_history, tweet_history, "bo", events_history, rate_history, "r-")
                 mpl.draw()
         except:
-            print("ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
+            print("IGONRED ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
 
 if __name__ == "__main__":
     try:
