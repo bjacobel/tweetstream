@@ -100,6 +100,28 @@ def importance(tweet):
     points -= abs(len(tweet['text'])-100)/float(100)
     print("-{:.2f} -- too short/long.").format(abs(len(tweet['text'])-100)/float(100))
 
+    # borrowing heavily from https://github.com/tophtucker/tweetregs/
+
+    # Public conversations that have nothing to do with you
+    if re.match(r'.@\w+\s+[A-Z]', tweet['text']):
+        points -= 1.5
+        print("-1.50 -- a needlessly public conversation")
+
+    # retweet cascades
+    if re.search(r'RT[^RT]+RT', tweet['text']):
+        points -= 1.5
+        print("-1.50 -- a retweet cascade")
+
+    # Plaintive requests for follows, or 'Follow Friday'
+    if re.search(r'(?i)please.*(\bwatch\b|\bfollow\b)|(\bwatch\b|\bfollow\b).*(me|please|back) | ^#?FF', tweet['text']):
+        points -= 2
+        print("-2.00 -- attention-whoring")
+
+    # the last rule of wire curator is you do not talk about wire curator
+    if re.search(r'@wirecurator', tweet['text']):
+        points -= 4
+        print("-4.00 -- @wirecurator")
+
     return points
 
 
