@@ -23,7 +23,7 @@ class RedisTweet:
     # Return the values for a key that all entries in the db possess
     # Optionally specity a subkey for deeper introspection
     def inspect_value(self, key, subkey=None):
-
+        
 
     # Purge elements added to redis through this class.
     def clear(self):

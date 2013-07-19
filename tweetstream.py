@@ -92,7 +92,7 @@ def importance(tweet):
 
     # downrank stupid hashtags
     for tag in tags:
-        if re.match(r'yolo|omg|wtf|lol|some|sm|wow)', tag.lower()):
+        if re.match(r'yolo|omg|wtf|lol|some|sm|wow|ff)', tag.lower()):
             points -= 1.5
             print("-1.50 -- stupid")
 
@@ -103,7 +103,7 @@ def importance(tweet):
     # borrowing heavily from https://github.com/tophtucker/tweetregs/
 
     # Public conversations that have nothing to do with you
-    if re.match(r'.@\w+\s+[A-Z]', tweet['text']):
+    if re.match(r'\.@\w+\s+[A-Z]', tweet['text']):
         points -= 1.5
         print("-1.50 -- a needlessly public conversation")
 
