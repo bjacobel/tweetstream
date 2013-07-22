@@ -183,7 +183,7 @@ def main():
                 mpl.plot(events_history, tweet_history, "bo", events_history, rate_history, "r-")
                 mpl.draw()
         except:
-            print("IGONRED ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
+            print("IGNORED ERROR: %s" % sys.exc_info()[0])  # DAMN THE TORPEDOES, FULL SPEED AHEAD
 
 if __name__ == "__main__":
     try:
