@@ -14,7 +14,7 @@ class CacheContainer:
             self.events.append({'item': item, 'timer': timer})
             timer.start()
 
-    def len(self):
+    def size(self):
         with self.lock:
             return len(self.events)
 

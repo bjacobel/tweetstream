@@ -1,11 +1,15 @@
 from twitter import *
 from myoauth import creds
-from CacheContainer import CacheContainer
+# from .cache_container import CacheContainer
+from redis_container import RedisContainer
 from Levenshtein import ratio
 import matplotlib.pyplot as mpl
 from math import log, sqrt
 from time import time
-import re, sys, os
+import pickle
+import re
+import sys
+import os
 
 cache_length = 300
 
@@ -129,9 +133,9 @@ def importance(tweet):
 def rate():
     elapsed = time() - start
     if elapsed < 300:
-        return cache.len() / float(elapsed) * 100
+        return cache.size() / float(elapsed) * 100
     else:
-        return cache.len() / float(cache_length) * 100
+        return cache.size() / float(cache_length) * 100
 
 
 def main():
@@ -139,7 +143,8 @@ def main():
     twitter_stream = TwitterStream(auth=OAuth(creds['OAUTH_TOKEN'], creds['OAUTH_SECRET'], creds['CONSUMER_KEY'], creds['CONSUMER_SECRET']))
 
     global cache
-    cache = CacheContainer(cache_length)
+    # cache = CacheContainer(cache_length)
+    cache = RedisContainer(cache_length)
 
     # for plot
     tweet_history = []
@@ -168,13 +173,13 @@ def main():
                     #debug printouts
                     print("importance %.2f > rate %.2f : retweeting") % (tweet_imp, stream_rate)
 
-                    while not twitter.statuses.retweet(id=tweet['id']):
-                        print("Retweet rejected -- twitter might be experiencing downtime. Trying again...")
+                    #while not twitter.statuses.retweet(id=tweet['id']):
+                    #    print("Retweet rejected -- twitter might be experiencing downtime. Trying again...")
                 else:
                     print("importance %.2f < rate %.2f : dropping") % (tweet_imp, stream_rate)
 
                 # cache the tweet whether it was worthy or not
-                cache.add(tweet)
+                cache.add(dict(tweet))
 
                 # make pretty graphs
                 tweet_history.append(tweet_imp)
@@ -191,5 +196,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         cache.clear()
         mpl.close()
-        print('Killed by user')
-        os.system('killall python')
