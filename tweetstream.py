@@ -158,7 +158,7 @@ def main():
             # tweet comes from someone in the list (not an RT of one of their tweets)
             if 'user' in tweet and tweet['user']['id_str'] in id_list:
                 f.write("\ntweet from {0}\n".format(tweet['user']['screen_name'].encode('utf-8')))
-                f.write(tweet['text'].encode('utf-8'))
+                f.write("{}\n".format(tweet['text'].encode('utf-8')))
 
                 tweet_imp = importance(tweet)
                 stream_rate = rate()
