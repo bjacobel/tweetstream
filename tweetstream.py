@@ -3,7 +3,7 @@ from myoauth import creds
 from redis_container import RedisContainer
 from Levenshtein import ratio
 from math import log, sqrt
-from time import time
+from time import time, strftime
 import re
 
 cache_length = 300
@@ -159,6 +159,7 @@ def main():
             if 'user' in tweet and tweet['user']['id_str'] in id_list:
                 f.write("\ntweet from {0}\n".format(tweet['user']['screen_name'].encode('utf-8')))
                 f.write("{}\n".format(tweet['text'].encode('utf-8')))
+                print("\rMost recent tweet at {}".format(strftime("%a, %d %b %Y %I:%M:%S"))),
 
                 tweet_imp = importance(tweet)
                 stream_rate = rate()
