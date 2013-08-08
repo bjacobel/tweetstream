@@ -31,10 +31,9 @@ def parse_links(tweet):
     return parsed_links
 
 
-# average tweets per 100 seconds
 def rate():
     elapsed = time() - start
-    if elapsed < 300:
+    if elapsed < cache_length:
         return cache.size() / float(elapsed) * 100
     else:
         return cache.size() / float(cache_length) * 100

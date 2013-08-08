@@ -1,3 +1,4 @@
+from __future__ import print_function
 from twitter import *
 from myoauth import creds
 from redis_container import RedisContainer
@@ -159,7 +160,7 @@ def main():
             if 'user' in tweet and tweet['user']['id_str'] in id_list:
                 f.write("\ntweet from {0}\n".format(tweet['user']['screen_name'].encode('utf-8')))
                 f.write("{}\n".format(tweet['text'].encode('utf-8')))
-                print("\rMost recent tweet at {}".format(strftime("%a, %d %b %Y %I:%M:%S"))),
+                print("\rMost recent tweet reviewed on {}".format(strftime("%a, %d %b %Y %I:%M:%S")), end='')
 
                 tweet_imp = importance(tweet)
                 stream_rate = rate()
@@ -185,4 +186,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
+        print("\n")
         cache.clear()
