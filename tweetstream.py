@@ -36,10 +36,10 @@ def importance(tweet):
     f.write("+{:.2f} -- listed by {:,}\n".format(sqrt(tweet['user']['listed_count']/float(5000)), tweet['user']['listed_count']))
 
     # add value for favorites and retweets
-    if tweet['retweet_count']:
+    if tweet['retweet_count'] and tweet['retweet_count'] > 0:
         points += log(tweet['retweet_count'], 10)
         f.write("+{:.2f} -- retweeted by {}\n".format(log(tweet['retweet_count'], 10), tweet['retweet_count']))
-    if tweet['favorite_count']:
+    if tweet['favorite_count'] and tweet['favorite_count'] > 0:
         points += log(tweet['favorite_count'], 10)
         f.write("+{:.2f} -- favorited by {}\n".format(log(tweet['favorite_count'], 10), tweet['favorite_count']))
 
