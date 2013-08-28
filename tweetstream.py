@@ -16,6 +16,11 @@ def importance(tweet):
 
     points = 0
 
+    # Kill the tweet with no points if it's vulgar
+    if re.search(r'(fuck|\bass(hole)?\b|shit|bitch)', tweet['text'].lower()):
+        f.write("thrown out -- vulgar\n")
+        return 0
+
     tags = []
     if 'hashtags' in tweet:
         for hashtag in tweet['hashtags']:
@@ -26,14 +31,6 @@ def importance(tweet):
         points += 1.5
         tweet = tweet['retweeted_status']
         f.write("+1.50 -- a retweet (really from @{})\n".format(tweet['user']['screen_name']))
-
-    # add value based on the number of followers the person tweeting has over 1000
-    points += log(tweet['user']['followers_count'], 10) - 3
-    f.write("+{:.2f} -- followed by {:,}\n".format(log(tweet['user']['followers_count'], 10) - 3, tweet['user']['followers_count']))
-
-    # add some value for being on peoples lists (people use lists, right?)
-    points += sqrt(tweet['user']['listed_count']/float(5000))
-    f.write("+{:.2f} -- listed by {:,}\n".format(sqrt(tweet['user']['listed_count']/float(5000)), tweet['user']['listed_count']))
 
     # add value for favorites and retweets
     if 'retweet_count' in tweet and tweet['retweet_count']:
@@ -51,6 +48,9 @@ def importance(tweet):
     if 'media' in tweet or re.search(r'(vine|pic.twitter|twitpic|yfrog|instagr(am)?)', urls):
         points += 1.5
         f.write("+1.50 -- contains media\n")
+    elif urls is not "":
+        points += 1.5
+        f.write("+1.50 -- contains a link (non-media)\n")
 
     # uprank for tweets with hashtags shared by 25% of the other tweets in the cache
     for tag in tags:
@@ -71,13 +71,8 @@ def importance(tweet):
 
     # highly devalue @replies
     if re.match(r'@', tweet['text']):
-        points -= 5
-        f.write("-5.00 -- an @reply\n")
-
-    # devalue tweets by users already in the cache (no livetweeting)
-    if tweet['user']['screen_name'] in cache.inspect_value('user', 'screen_name'):
-        points -= 1.5
-        f.write("-1.50 -- from an author already in the cache\n")
+        points -= 6.5
+        f.write("-6.50 -- an @reply\n")
 
     # devalue every @mention past 1 (they indicate the tweet is for those peoples' benefit, not ours)
     mentions = len(re.findall(r'@', tweet['text']))
@@ -85,24 +80,11 @@ def importance(tweet):
         points -= ((mentions-1) * 0.75)
         f.write("-{:.2f} -- too @mention-y\n".format((mentions-1) * 0.75))
 
-    # devalue swearwords because god forbid we offend somebody
-    # proof of concept - this could either get way more complex or removed entirely
-    # because in theory we trust the people we're following to not be jerks
-    if re.search(r'(fuck|\bass(hole)?\b|shit|bitch)', tweet['text'].lower()):
-        points -= 2
-        f.write("-2.00 -- vulgar\n")
-
     # downrank stupid hashtags
     for tag in tags:
         if re.match(r'yolo|omg|wtf|lol|some|sm|wow|ff)', tag.lower()):
             points -= 1.5
             f.write("-1.50 -- stupid\n")
-
-    # downrank tweets the farther they are from the "sweet spot", 100chars long
-    points -= abs(len(tweet['text'])-100)/float(100)
-    f.write("-{:.2f} -- too short/long.\n".format(abs(len(tweet['text'])-100)/float(100)))
-
-    # borrowing heavily from https://github.com/tophtucker/tweetregs/
 
     # Public conversations that have nothing to do with you
     if re.match(r'\.@\w+\s+[A-Z]', tweet['text']):
