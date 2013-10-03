@@ -20,18 +20,18 @@ def importance(tweet):
 
     # Kill the tweet with no points if it's vulgar
     if re.search(r'fuck|\bass(hole)?\b|shit|bitch', tweet['text'].lower()):
-        f.write("thrown out for being vulgar")
+        f.write("thrown out for being vulgar\",")
         return 0
 
     tags = []
-    if 'hashtags' in tweet:
-        for hashtag in tweet['hashtags']:
+    if tweet.get('hashtags') is not None:
+        for hashtag in tweet.get('hashtags'):
             tags.append(hashtag['tweet'])
 
     # add value for the tweet being itself a retweet
     if 'retweeted_status' in tweet:
         points += 1.5
-        tweet = tweet['retweeted_status']
+        tweet = tweet.get('retweeted_status')
         f.write("a retweet (really from @{}) (+1.50), ".format(tweet['user']['screen_name']))
 
     # add value for favorites and retweets
@@ -44,13 +44,10 @@ def importance(tweet):
 
     # add value for sharing links and media
     urls = ""
-    if 'entities' in tweet:
-        if 'urls' in tweet['entities']:
-            for url in tweet['entities']['urls']:
-                urls += " ".join(url['display_url'])
-            print(tweet['text'] + " :: " + urls)
-        else:
-            print (tweet['text'] + " :: (no URLs parsed)")
+    url_entities = tweet.get('entities').get('urls')
+    if url_entities is not None:
+        for url in url_entities:
+            urls += " ".join(url['display_url'])
 
     if 'media' in tweet or re.search(r'(vine|pic\.twitter|twitpic|yfrog|instagr(\.)?am)', urls):
         points += 1.5
